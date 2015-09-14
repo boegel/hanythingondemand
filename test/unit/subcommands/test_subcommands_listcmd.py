@@ -41,14 +41,15 @@ class TestListSubCommand(EnhancedTestCase):
 
     def test_run_good(self):
         import hod.rmscheduler.rm_pbs as rm_pbs
-        expected = "Cluster label\tjob ID\nmylabel      \tJobid  good-jobid state good-state ehosts good-host\n"
-        job = rm_pbs.PbsJob('good-jobid', 'good-state', 'good-host')
+        expected = "Cluster label\tjob ID\nmylabel      \tJobid  987.master123 state good-state ehosts good-host\n"
+        job = rm_pbs.PbsJob('987.master123', 'good-state', 'good-host')
         with patch('hod.rmscheduler.rm_pbs.Pbs', return_value=Mock(state=lambda: [job])):
-            with patch('hod.cluster.cluster_jobid', return_value='good-jobid'):
-                with patch('hod.cluster.known_cluster_labels', return_value=['mylabel']):
-                    app = ListSubCommand()
-                    with capture(app.run, []) as (out, err):
-                        self.assertEqual(out, expected)
+            with patch('hod.rmscheduler.rm_pbs.master_hostname', return_value='master123'):
+                with patch('hod.cluster.cluster_jobid', return_value='987.master123'):
+                    with patch('hod.cluster.known_cluster_labels', return_value=['mylabel']):
+                        app = ListSubCommand()
+                        with capture(app.run, []) as (out, err):
+                            self.assertEqual(out, expected)
 
     def test_usage(self):
         app = ListSubCommand()
