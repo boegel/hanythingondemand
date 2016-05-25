@@ -46,6 +46,8 @@ CLUSTER_ENV_TEMPLATE = """
 # make sure session is properly set up (e.g., that 'module' command is defined)
 source /etc/profile
 
+module purge
+%(load_init_modules)s
 module load %(modules)s
 
 # set up environment
@@ -223,6 +225,12 @@ def gen_cluster_info(label, options):
         'modules': ' '.join(hodconf.modules),
         'workdir': options.workdir
     }
+
+    if options.init_modules:
+        cluster_info['load_init_modules'] = "module load %s" % ' '.join(options.init_modules)
+    else:
+        cluster_info['load_init_modules'] = "# no init modules specified"
+
     return cluster_info
 
 
@@ -261,7 +269,6 @@ def save_cluster_info(cluster_info):
     Save info (job ID, env script, ...) for this cluster in the cluster info dir.
     cluster_info is a dict created by `gen_cluster_info` (not a ClusterInfo instance)
     """
-    info_dir = os.path.join(cluster_info_dir(), cluster_info['label'])
     jobid = os.getenv('PBS_JOBID', 'PBS_JOBID_NOT_DEFINED')
 
     if not cluster_info_exists(cluster_info['label']):
@@ -270,7 +277,7 @@ def save_cluster_info(cluster_info):
 
     env_script_txt = generate_cluster_env_script(cluster_info)
 
-    with open(os.path.join(info_dir, 'env'), 'w') as env_script:
+    with open(cluster_env_file(cluster_info['label']), 'w') as env_script:
         env_script.write(env_script_txt)
 
 

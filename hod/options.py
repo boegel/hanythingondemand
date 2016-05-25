@@ -37,6 +37,7 @@ GENERAL_HOD_OPTIONS = {
     'hodconf': ("Top level configuration file. This can be a comma separated list of config files with "
                 "the later files taking precendence.", 'string', 'store', None),
     'hod-module': ("Module to load for hanythingondemand in submitted job", 'string', 'store', None),
+    'init-modules': ("List of modules to load after 'module purge'", 'strlist', 'store', None),
     'label': ("Cluster label", 'string', 'store', None),
     'workdir': ("Working directory", 'string', 'store', None),
 }
