@@ -269,6 +269,7 @@ def save_cluster_info(cluster_info):
     Save info (job ID, env script, ...) for this cluster in the cluster info dir.
     cluster_info is a dict created by `gen_cluster_info` (not a ClusterInfo instance)
     """
+    info_dir = os.path.join(cluster_info_dir(), cluster_info['label'])
     jobid = os.getenv('PBS_JOBID', 'PBS_JOBID_NOT_DEFINED')
 
     if not cluster_info_exists(cluster_info['label']):
@@ -277,7 +278,7 @@ def save_cluster_info(cluster_info):
 
     env_script_txt = generate_cluster_env_script(cluster_info)
 
-    with open(cluster_env_file(cluster_info['label']), 'w') as env_script:
+    with open(os.path.join(info_dir, 'env'), 'w') as env_script:
         env_script.write(env_script_txt)
 
 
