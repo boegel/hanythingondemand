@@ -121,6 +121,7 @@ class Command(object):
         popen_kwargs.update(stdouterr)
         # TODO: (high) buffer overflow here sometimes, check what happens and fix
         # see easybuild/buildsoft/async
+        self.log.debug("Popen args: %s, %s", self.__str__(), popen_kwargs)
         p = Popen(self.__str__(), **popen_kwargs)
         time.sleep(.1)  # for immediate answers
         timedout = False
