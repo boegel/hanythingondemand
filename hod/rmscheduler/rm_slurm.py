@@ -98,8 +98,6 @@ class Slurm(ResourceManagerScheduler):
         f.close()
 
         stdout, stderr = Sbatch(scriptfn).run()
-        print 'stdout: %s' % stdout
-        print 'stderr: %s' % stderr
         if stderr:
             raise RuntimeError("Job submission failed: %s" % stderr)
 
@@ -194,9 +192,12 @@ class Slurm(ResourceManagerScheduler):
 
         # get list of all jobs
         jobs = self.list_jobs()
+        self.log.debug("List of jobs before filtering: %s", jobs)
 
         # filter based on job ID
+        self.log.debug("Filtering with jobid %s (type %s)", jobid, type(jobid))
         jobs = [j for j in jobs if j['JOBID'] == jobid]
+        self.log.debug("List of jobs after filtering: %s", jobs)
 
         res = []
         for job in jobs:
