@@ -26,16 +26,11 @@
 
 @author: Stijn De Weirdt (University of Ghent)
 """
-
-import os
-import sys
-
-import hod
 from hod.rmscheduler.job import Job
 from hod.rmscheduler.rm_pbs import Pbs
+from hod.rmscheduler.rm_slurm import Slurm
 from hod.rmscheduler.resourcemanagerscheduler import ResourceManagerScheduler
-from hod.config.config import (parse_comma_delim_list,
-        PreServiceConfigOpts, resolve_config_paths)
+from hod.config.config import parse_comma_delim_list, PreServiceConfigOpts, resolve_config_paths
 
 
 class HodJob(Job):
@@ -84,6 +79,7 @@ class HodJob(Job):
         """Find the job information of submitted jobs"""
         return self.type.state()
 
+
 class MympirunHod(HodJob):
     """Hod type job using mympirun cmd style."""
     OPTION_IGNORE_PREFIX = ['job', 'action', 'mympirun']
@@ -112,12 +108,11 @@ class MympirunHod(HodJob):
         return [' '.join(main)]
 
 
-class PbsHodJob(MympirunHod):
-    """PbsHodJob type job for easybuild infrastructure
-        - easybuild module names
-    """
+class GenericHodJob(MympirunHod):
+    """Generic class for HoD jobs that are submitted to a specific resource manager."""
+
     def __init__(self, options):
-        super(PbsHodJob, self).__init__(options)
+        super(GenericHodJob, self).__init__(options)
 
         self.modules = [options.options.hod_module]
 
@@ -126,7 +121,7 @@ class PbsHodJob(MympirunHod):
         config_filenames = parse_comma_delim_list(config_filenames)
         self.log.info('Loading "%s" manifest config', config_filenames)
         # If the user mistypes the --dist argument (e.g. Haddoop-...) then this will
-        # raise; TODO: cleanup the error reporting. 
+        # raise; TODO: cleanup the error reporting.
         precfg = PreServiceConfigOpts.from_file_list(config_filenames, workdir=options.options.workdir,
                                                      modulepaths=options.options.modulepaths,
                                                      modules=options.options.modules)
@@ -137,7 +132,20 @@ class PbsHodJob(MympirunHod):
             self.log.debug("Adding '%s' module to startup script.", module)
             self.modules.append(module)
 
+
+class PbsHodJob(GenericHodJob):
+    """PbsHodJob jbo type, uses EasyBuild module names"""
+
     def set_type_class(self):
         """Set the typeclass"""
         self.log.debug("Using default class Pbs.")
         self.type_class = Pbs
+
+
+class SlurmHodJob(GenericHodJob):
+    """SlurmHodJob jbo type, uses EasyBuild module names"""
+
+    def set_type_class(self):
+        """Set the typeclass"""
+        self.log.debug("Using default class Pbs.")
+        self.type_class = Slurm
