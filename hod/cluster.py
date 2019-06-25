@@ -66,7 +66,8 @@ module list 2>&1
 """
 
 
-ClusterInfo = namedtuple('ClusterInfo', 'label, jobid, pbsjob')
+ClusterInfo = namedtuple('ClusterInfo', 'label, jobid, job')
+
 
 def is_valid_label(label):
     """
@@ -96,6 +97,7 @@ def validate_label(label, known_labels):
 
     return True
 
+
 def validate_hodconf_or_dist(hodconf, dist):
     """
     Returns true if either the hodconf or the dist can be resolved successfully.
@@ -107,6 +109,7 @@ def validate_hodconf_or_dist(hodconf, dist):
         _log.error(e)
         return False
     return True
+
 
 def report_cluster_submission(label):
     """
@@ -146,6 +149,7 @@ def known_cluster_labels():
 
     return res
 
+
 def _cluster_info(label, info_file):
     """
     Return path to specified cluster info file for cluster with specified label.
@@ -173,17 +177,17 @@ def cluster_workdir(label):
     return os.path.expandvars(open(_cluster_info(label, 'workdir')).read())
 
 
-def _find_pbsjob(jobid, pbsjobs):
-    for job in pbsjobs:
+def _find_job(jobid, jobs):
+    for job in jobs:
         if jobid == job.jobid:
             return job
     return None
 
 
-def mk_cluster_info_dict(labels, pbsjobs, master=None):
+def mk_cluster_info_dict(labels, jobs, master=None):
     """
-    Given a list of labels and PbsJobs, construct a dict of list of tuples
-    mapping label to PbsJob.
+    Given a list of labels and jobs, construct a dict of list of tuples
+    mapping label to job.
     """
     info = []
     seen_jobs = set()
@@ -194,7 +198,7 @@ def mk_cluster_info_dict(labels, pbsjobs, master=None):
             jobid = cluster_jobid(label)
             if master is not None and not jobid.endswith(master):
                 continue
-            job = _find_pbsjob(jobid, pbsjobs)
+            job = _find_job(jobid, jobs)
             if job is not None:
                 seen_jobs.add(jobid)
         except ValueError as err:
@@ -289,7 +293,7 @@ def clean_cluster_info(master, cluster_info):
     master, but no job info founs.
     """
     for info in cluster_info:
-        if info.pbsjob is None and (master is None or info.jobid.endswith(master)):
+        if info.job is None and (master is None or info.jobid.endswith(master)):
             rm_cluster_localworkdir(info.label)
             rm_cluster_info(info.label)
 

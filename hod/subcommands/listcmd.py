@@ -63,10 +63,10 @@ def format_list_rows(cluster_info):
     for info in cluster_info:
         label = info.label if info.label is not None else '<no-label>'
         jobid = info.jobid
-        if info.pbsjob is None:
+        if info.job is None:
             state, hosts = '<job-not-found>', '<none>'
         else:
-            state, hosts = info.pbsjob.state, info.pbsjob.hosts
+            state, hosts = info.job.state, info.job.hosts
         ret.append((label, jobid, state, hosts))
     return ret
 
