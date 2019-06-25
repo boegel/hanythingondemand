@@ -209,90 +209,61 @@ class Slurm(ResourceManagerScheduler):
            ppn = ppn (-1 = full node)
            walltime = time in hours (can be float)
         """
-        nodes = self.options.get('nodes', 50)
-        ppn = self.options.get('ppn', -1)
+        nodes = self.options.get('nodes', None)
+        ppn = self.options.get('ppn', None)
         walltime = self.options.get('walltime', 72)
         mail = self.options.get('mail', [])
         mail_others = self.options.get('mailothers', [])
-        queue = self.options.get('queue', 'default')
-        partition = self.options.get('partition', 'default')
-        account = self.options.get('account', 'default')
         reservation = self.options.get('reservation', None)
 
-        self.log.debug("nodes %s, ppn %s, walltime %s, mail %s, mail_others %s, queue %s, partition %s, account %s",
-                       nodes, ppn, walltime, mail, mail_others, queue, partition, account)
+        self.log.debug("nodes %s, ppn %s, walltime %s, mail %s, mail_others %s",
+                       nodes, ppn, walltime, mail, mail_others)
+
         if nodes is None:
             nodes = 1
 
         if ppn is None:
             ppn = 1
 
-        raise NotImplementedError  # FIXME (stuff below hasn't been cleaned up yet to match Slurm)
-
-        walltime = int(float(walltime) * 60 * 60)  # in hours
-        m, s = divmod(walltime, 60)
-        h, m = divmod(m, 60)
-        # d, h = divmod(h, 24) ## no days
-        # also prints leading 0s (do not insert if x > 0 (eg print 1:0)!
-        # walltimetxt = ":".join(["%02d" % x for x in [ d,h, m, s]]) ## no days
-        walltimetxt = ":".join(["%02d" % x for x in [h, m, s]])
+        walltimetxt = '%d:00' % (int(walltime) * 60)  # input is in hours, convert to minutes:seconds
 
         self.log.debug("Going to generate for nodes %s, ppn %s, walltime %s",
                        nodes, ppn, walltimetxt)
 
-        self.args = {'resources': {'walltime': walltimetxt,
-                                   'nodes': '%d:ppn=%d' % (nodes, ppn)
-                                   },
-                     }
+        self.args = {
+            'nodes': nodes,
+            'ntasks-per-node': ppn,
+            'time': walltimetxt,
+        }
 
-        if queue:
-            self.args['queue'] = queue
+        if mail:
+            mail_types = []
+            for mail_type in mail:
+                if mail_type == 'b':
+                    mail_type = 'BEGIN'
+                elif mail_type == 'a':
+                    mail_type = 'FAIL'
+                elif mail_type == 'e':
+                    mail_type = 'END'
+                else:
+                    raise ValueError("Unknown mail type: %s", mail_type)
 
-        if partition:
-            self.args['resources']['partition'] = partition
+                mail_types.append(mail_type)
 
-        if account:
-            self.args['account'] = account
+            self.args['mail-type'] = ','.join(mail_types)
 
-        if mail or mail_others:
-            self.args['mail'] = {}
-            if not mail:
-                mail = ['e']
-            self.args['mail']['send'] = ''.join(mail)
-            if mail_others:
-                self.args['mail']['others'] = ','.join(mail_others)
+        if mail_others:
+            self.args['mail-user'] = mail_others
 
         if reservation:
             self.args['reservation'] = reservation
 
         self.log.debug("Create args %s", self.args)
 
-        # # creating the header. Not used in submission!!
         opts = []
-        for arg in self.args.keys():
-            if arg in ('resources',):
-                for k, v in self.args[arg].items():
-                    opts.append("-l %s=%s" % (k, v))
-            elif arg in ('mail',):
-                opts.append('-m %s' % self.args[arg]['send'])
-                if 'others' in self.args[arg]:
-                    opts.append('-M %s' % self.args[arg]['others'])
-            elif arg in ('queue',):
-                if self.args[arg]:
-                    opts.append('-q %s' % self.args[arg])
-            elif arg in ('account',):
-                if self.args[arg]:
-                    opts.append('-A %s' % self.args[arg])
-            elif arg in ('reservation',):
-                if self.args[arg]:
-                    opts.append('-W x=FLAGS:ADVRES:%s' % self.args[arg])
-            else:
-                self.log.debug("Unknown arg %s. Not adding to args.", arg)
+        for key in self.args.keys():
+            opts.append('--%s=%s' % (key, self.args[key]))
 
         hdr = ["#SBATCH %s" % o for o in opts]
         self.log.debug("Created job script header %s", hdr)
         return hdr
-
-    def get_ppn(self):
-        """Guess the ppn for full node"""
-        raise NotImplementedError
