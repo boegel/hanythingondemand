@@ -107,25 +107,25 @@ class Slurm(ResourceManagerScheduler):
         if jobid is None:
             jobid = self.jobid
 
-        state = self.info(jobid, types=['job_state', 'exec_host'], job_filter=job_filter)
+        state = self.info(jobid, types=['STATE', 'NODELIST'], job_filter=job_filter)
 
         jid = [x['id'] for x in state]
 
-        jstate = [x.get('job_state', None) for x in state]
+        jstate = [x.get('STATE', None) for x in state]
 
         def get_uniq_hosts(txt, num=1):
             """txt host1/cpuid+host2/cpuid
                 - num: number of nodes to return
             """
             res = []
-            for h_c in txt.split('+'):
+            for h_c in txt.split(','):
                 h = h_c.split('/')[0]
                 if h in res:
                     continue
                 res.append(h)
             return res[:num]
 
-        ehosts = [get_uniq_hosts(x.get('exec_host', '')) for x in state]
+        ehosts = [get_uniq_hosts(x.get('NODELIST', '')) for x in state]
 
         self.log.debug("Jobid  %s jid %s state %s ehosts %s (%s)", jobid, jid, jstate, ehosts, state)
 
@@ -177,6 +177,7 @@ class Slurm(ResourceManagerScheduler):
 
         # only known filter is based on job name
         job_name_filter = job_filter.pop('Job_Name', None)
+        print 'job_name_filter: ', job_name_filter
         if job_filter:
             raise NotImplementedError("Unknown job filter keys encountered: %s" % job_filter.keys())
 
