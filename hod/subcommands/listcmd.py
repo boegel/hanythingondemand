@@ -29,22 +29,32 @@ List the running applications.
 @author: Ewan Higgs (Universiteit Gent)
 @author: Kenneth Hoste (Universiteit Gent)
 """
-
+import copy
 import sys
-from itertools import chain
 
 from vsc.utils.generaloption import GeneralOption
 
 from hod import VERSION as HOD_VERSION
+from hod.options import COMMON_HOD_CONFIG_OPTIONS, GENERAL_HOD_OPTIONS, PBS, SLURM
+from hod.rmscheduler.rm_pbs import Pbs
+from hod.rmscheduler.rm_slurm import Slurm
 from hod.subcommands.subcommand import SubCommand
 import hod.cluster as hc
 import hod.table as ht
-import hod.rmscheduler.rm_pbs as rm_pbs
 
 
 class ListOptions(GeneralOption):
     """Option parser for 'list' subcommand."""
     VERSION = HOD_VERSION
+
+    def config_options(self):
+        """Add general configuration options."""
+        opts = copy.deepcopy(GENERAL_HOD_OPTIONS)
+        opts.update(COMMON_HOD_CONFIG_OPTIONS)
+        descr = ["Create configuration", "Configuration options for the 'list' subcommand"]
+
+        self.log.debug("Add config option parser descr %s opts %s", descr, opts)
+        self.add_group_parser(opts, descr)
 
 
 def format_list_rows(cluster_info):
@@ -69,9 +79,18 @@ class ListSubCommand(SubCommand):
     def run(self, args):
         """Run 'list' subcommand."""
         optparser = ListOptions(go_args=args, envvar_prefix=self.envvar_prefix, usage=self.usage_txt)
+
+        if optparser.options.rm_backend == SLURM:
+            rm_class = Slurm
+        elif optparser.options.rm_backend == PBS:
+            rm_class = Pbs
+        else:
+            sys.stderr.write("Unknown resource manager backend specified: %s", optparser.options.rm_backend)
+            return 1
+
         try:
-            pbs = rm_pbs.Pbs(optparser)
-            state = pbs.state()
+            rm = rm_class(optparser)
+            state = rm.state()
             labels = hc.known_cluster_labels()
             info = hc.mk_cluster_info_dict(labels, state)
             if not info:

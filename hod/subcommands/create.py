@@ -30,7 +30,6 @@ Generate a PBS job script using pbs_python. Will use mympirun to get the all sta
 @author: Ewan Higgs (Universiteit Gent)
 @author: Kenneth Hoste (Ghent University)
 """
-import os
 import copy
 import sys
 
@@ -38,8 +37,9 @@ from vsc.utils.generaloption import GeneralOption
 
 import hod.cluster as hc
 from hod import VERSION as HOD_VERSION
+from hod.options import PBS, SLURM
 from hod.options import COMMON_HOD_CONFIG_OPTIONS, GENERAL_HOD_OPTIONS, RESOURCE_MANAGER_OPTIONS, validate_pbs_option
-from hod.rmscheduler.hodjob import PbsHodJob
+from hod.rmscheduler.hodjob import PbsHodJob, SlurmHodJob
 from hod.subcommands.subcommand import SubCommand
 
 
@@ -77,8 +77,18 @@ class CreateSubCommand(SubCommand):
         """Run 'create' subcommand."""
         optparser = CreateOptions(go_args=args, envvar_prefix=self.envvar_prefix, usage=self.usage_txt)
         options = optparser.options
-        if not validate_pbs_option(options):
-            sys.stderr.write('Missing config options. Exiting.\n')
+
+        if options.rm_backend == SLURM:
+            job_class = SlurmHodJob
+
+        elif options.rm_backend == PBS:
+            job_class = PbsHodJob
+
+            if not validate_pbs_option(options):
+                sys.stderr.write('Missing config options. Exiting.\n')
+                return 1
+        else:
+            sys.stderr.write("Unknown resource manager backend specified: %s", options.rm_backend)
             return 1
 
         label = options.label
@@ -90,7 +100,7 @@ class CreateSubCommand(SubCommand):
             sys.exit(1)
 
         try:
-            j = PbsHodJob(optparser)
+            j = job_class(optparser)
             hc.report_cluster_submission(label)
             j.run()
             jobs = j.state()
