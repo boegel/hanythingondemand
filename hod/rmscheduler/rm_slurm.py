@@ -188,11 +188,15 @@ class Slurm(ResourceManagerScheduler):
 
         # only known filter is based on job name
         job_name_filter = job_filter.pop('Job_Name', None)
+        self.log.debug("Job name filter: %s" % job_name_filter)
         if job_filter:
             raise NotImplementedError("Unknown job filter keys encountered: %s" % job_filter.keys())
 
-        # get list of jobs
+        # get list of all jobs
         jobs = self.list_jobs()
+
+        # filter based on job ID
+        jobs = [j for j in jobs if j['JOBID'] == jobid]
 
         res = []
         for job in jobs:
