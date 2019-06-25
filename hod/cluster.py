@@ -289,7 +289,7 @@ def clean_cluster_info(master, cluster_info):
     master, but no job info founs.
     """
     for info in cluster_info:
-        if info.pbsjob is None and info.jobid.endswith(master):
+        if info.pbsjob is None and (master is None or info.jobid.endswith(master)):
             rm_cluster_localworkdir(info.label)
             rm_cluster_info(info.label)
 

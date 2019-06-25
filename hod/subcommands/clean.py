@@ -29,18 +29,31 @@ Remove stale .hod.d/* files.
 @author: Ewan Higgs (Universiteit Gent)
 @author: Kenneth Hoste (Universiteit Gent)
 """
+import copy
+import sys
 
 from vsc.utils.generaloption import GeneralOption
 
+import hod.cluster as hc
 from hod import VERSION as HOD_VERSION
 from hod.subcommands.subcommand import SubCommand
-import hod.cluster as hc
-import hod.rmscheduler.rm_pbs as rm_pbs
+from hod.options import COMMON_HOD_CONFIG_OPTIONS, GENERAL_HOD_OPTIONS, PBS, SLURM
+from hod.rmscheduler.rm_pbs import Pbs, master_hostname
+from hod.rmscheduler.rm_slurm import Slurm
 
 
 class CleanOptions(GeneralOption):
     """Option parser for 'clean' subcommand."""
     VERSION = HOD_VERSION
+
+    def config_options(self):
+        """Add general configuration options."""
+        opts = copy.deepcopy(GENERAL_HOD_OPTIONS)
+        opts.update(COMMON_HOD_CONFIG_OPTIONS)
+        descr = ["Create configuration", "Configuration options for the 'list' subcommand"]
+
+        self.log.debug("Add config option parser descr %s opts %s", descr, opts)
+        self.add_group_parser(opts, descr)
 
 
 class CleanSubCommand(SubCommand):
@@ -51,11 +64,21 @@ class CleanSubCommand(SubCommand):
     def run(self, args):
         """Run 'clean' subcommand."""
         optparser = CleanOptions(go_args=args, envvar_prefix=self.envvar_prefix, usage=self.usage_txt)
+
+        if optparser.options.rm_backend == SLURM:
+            rm_class = Slurm
+            rm_master = None
+        elif optparser.options.rm_backend == PBS:
+            rm_class = Pbs
+            rm_master = master_hostname()
+        else:
+            sys.stderr.write("Unknown resource manager backend specified: %s", optparser.options.rm_backend)
+            return 1
+
         try:
-            pbs = rm_pbs.Pbs(optparser)
-            state = pbs.state()
+            rm = rm_class(optparser)
+            state = rm.state()
             labels = hc.known_cluster_labels()
-            rm_master = rm_pbs.master_hostname()
             info = hc.mk_cluster_info_dict(labels, state, master=rm_master)
             hc.clean_cluster_info(rm_master, info)
         except StandardError as err:
