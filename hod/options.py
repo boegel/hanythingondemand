@@ -31,12 +31,16 @@ Hanythingondemand main program.
 """
 from vsc.utils import fancylogger
 
+PBS = 'PBS'
+SLURM = 'Slurm'
+
 COMMON_HOD_CONFIG_OPTIONS = {
     'modulepaths': ("Extra paths to take into account for loading modules", 'string', 'store', None),
     'modules': ("Extra modules to load in each service environment", 'string', 'store', None),
 }
 
 GENERAL_HOD_OPTIONS = {
+    'rm-backend': ("Resource manager 'backend' to use", 'choice', 'store', SLURM, [PBS, SLURM]),
     'dist': ("Prepackaged Hadoop distribution (e.g.  Hadoop/2.5.0-cdh5.3.1-native). "
              "This cannot be set if --hodconf is set", 'string', 'store', None),
     'hodconf': ("Top level configuration file. This can be a comma separated list of config files with "
@@ -60,6 +64,7 @@ RESOURCE_MANAGER_OPTIONS = {
 
 _log = fancylogger.getLogger('create', fname=False)
 
+
 def validate_required_option(options):
     """pbs options require a config and a workdir"""
     if not options.hodconf and not options.dist:
@@ -73,6 +78,7 @@ def validate_required_option(options):
         return False
 
     return True
+
 
 def validate_pbs_option(options):
     """pbs options require a config and a workdir"""
