@@ -142,7 +142,27 @@ class Slurm(ResourceManagerScheduler):
         # https://gist.github.com/stevekm/7831fac98473ea17d781330baa0dd7aa
         stdout, _ = Squeue().run()
 
-        return stdout
+        # expected format:
+        # CLUSTER: cluster_name
+        # LABEL1|LABEL2|...
+        # job1_value1|job1_value2|...
+        # job2_value1|job2_value2|...
+
+        lines = stdout.splitlines()
+
+        # first line can be ignored
+        lines.pop(0)
+
+        # 2nd line is name of fields
+        keys = lines.pop(0).split('|')
+
+        jobs = []
+        for line in lines:
+            values = line.split('|')
+            job = dict((key, val) for key, val in zip(keys, values))
+            jobs.append(job)
+
+        return jobs
 
     def info(self, jobid, types=None, job_filter=None):
         """Return jobinfo"""
@@ -162,14 +182,15 @@ class Slurm(ResourceManagerScheduler):
 
         # get list of jobs
         jobs = self.list_jobs()
-        print jobs
+        import pprint
+        pprint.pprint(jobs)
 
         res = []
         for job in jobs:
             job_details = {}
             if job_name_filter:
                 regex = re.compile(job_name_filter)
-                if regex.search(job['Job_Name']):
+                if regex.search(job['NAME']):
                     res.append(job_details)
 
         self.log.info("Found job info %s", res)
