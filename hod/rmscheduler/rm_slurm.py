@@ -28,9 +28,11 @@ Implementation of the Slurm resource manager
 @author: Kenneth Hoste (Ghent University)
 """
 import os
+import re
 import tempfile
 from vsc.utils import fancylogger
 
+from hod.commands.command import Squeue
 from hod.rmscheduler.resourcemanagerscheduler import ResourceManagerScheduler
 
 
@@ -134,13 +136,43 @@ class Slurm(ResourceManagerScheduler):
         jobs = [SlurmJob(j, s, h) for (j, s, h) in zip(jid, jstate, map(_first_or_blank, ehosts))]
         return jobs
 
+    def list_jobs(self):
+        """Return list of currently queued/running jobs."""
+
+        # https://gist.github.com/stevekm/7831fac98473ea17d781330baa0dd7aa
+        stdout, _ = Squeue().run()
+
+        return stdout
+
     def info(self, jobid, types=None, job_filter=None):
         """Return jobinfo"""
 
+        if job_filter is None:
+            job_filter = {}
+        self.log.debug("Job filter passed %s", job_filter)
+        if self.job_filter is not None:
+            self.log.debug("Job filter update with %s", self.job_filter)
+            job_filter.update(self.job_filter)
+        self.log.debug("Job filter used %s", job_filter)
+
+        # only known filter is based on job name
+        job_name_filter = job_filter.pop('Job_Name', None)
+        if job_filter:
+            raise NotImplementedError("Unknown job filter keys encountered: %s" % job_filter.keys())
+
+        # get list of jobs
+        jobs = self.list_jobs()
+        print jobs
+
         res = []
+        for job in jobs:
+            job_details = {}
+            if job_name_filter:
+                regex = re.compile(job_name_filter)
+                if regex.search(job['Job_Name']):
+                    res.append(job_details)
 
-        raise NotImplementedError
-
+        self.log.info("Found job info %s", res)
         return res
 
     def remove(self, jobid=None):

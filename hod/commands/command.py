@@ -195,6 +195,15 @@ class ULimit(Command):
         Command.__init__(self)
         self.command = ['ulimit', flag]
 
+
+class Squeue(Command):
+    """Run 'squeue -o %all' and return output."""
+
+    def __init__(self):
+        Command.__init__(self)
+        self.command = ['squeue', '-o', '%all']
+
+
 class ScreenDaemon(Command):
     """Start a named screen session in background"""
     def __init__(self, name):
