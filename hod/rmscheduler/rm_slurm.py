@@ -109,7 +109,7 @@ class Slurm(ResourceManagerScheduler):
 
         state = self.info(jobid, types=['STATE', 'NODELIST'], job_filter=job_filter)
 
-        jid = [x['id'] for x in state]
+        jid = [x['JOBID'] for x in state]
 
         jstate = [x.get('STATE', None) for x in state]
 
@@ -177,22 +177,19 @@ class Slurm(ResourceManagerScheduler):
 
         # only known filter is based on job name
         job_name_filter = job_filter.pop('Job_Name', None)
-        print 'job_name_filter: ', job_name_filter
         if job_filter:
             raise NotImplementedError("Unknown job filter keys encountered: %s" % job_filter.keys())
 
         # get list of jobs
         jobs = self.list_jobs()
-        import pprint
-        pprint.pprint(jobs)
 
         res = []
         for job in jobs:
-            job_details = {}
             if job_name_filter:
                 regex = re.compile(job_name_filter)
-                if regex.search(job['NAME']):
-                    res.append(job_details)
+                if not regex.search(job['NAME']):
+                    continue
+            res.append(job)
 
         self.log.info("Found job info %s", res)
         return res
