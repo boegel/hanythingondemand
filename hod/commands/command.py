@@ -197,11 +197,19 @@ class ULimit(Command):
 
 
 class Squeue(Command):
-    """Run 'squeue -o %all' and return output."""
+    """Wrapper for 'squeue -o %all'."""
 
     def __init__(self):
         Command.__init__(self)
         self.command = ['squeue', '-o', '%all']
+
+
+class Sbatch(Command):
+    """Wrapper for 'sbatch <script>'."""
+
+    def __init__(self, script):
+        Command.__init__(self)
+        self.command = ['sbatch', script]
 
 
 class ScreenDaemon(Command):

@@ -32,7 +32,7 @@ import re
 import tempfile
 from vsc.utils import fancylogger
 
-from hod.commands.command import Squeue
+from hod.commands.command import Sbatch, Squeue
 from hod.rmscheduler.resourcemanagerscheduler import ResourceManagerScheduler
 
 
@@ -97,8 +97,19 @@ class Slurm(ResourceManagerScheduler):
         f.write(txt)
         f.close()
 
-        self.jobid = None  # FIXME replace with submission command
-        self.log.debug("Succesful jobsubmission returned jobid %s", self.jobid)
+        stdout, stderr = Sbatch(scriptfn).run()
+        print 'stdout: %s' % stdout
+        print 'stderr: %s' % stderr
+        if stderr:
+            raise RuntimeError("Job submission failed: %s" % stderr)
+
+        jobid_regex = re.compile("Submitted batch job ([0-9]+)")
+        res = jobid_regex.search(stdout)
+        if res:
+            self.jobid = res.group(1)
+            self.log.debug("Succesful jobsubmission returned jobid %s", self.jobid)
+        else:
+            raise RuntimeError("Failed to determine job ID from output: %s" % stdout)
 
         os.remove(scriptfn)
 
