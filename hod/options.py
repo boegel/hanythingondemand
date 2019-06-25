@@ -47,15 +47,15 @@ GENERAL_HOD_OPTIONS = {
 }
 
 RESOURCE_MANAGER_OPTIONS = {
-    'walltime': ("Job walltime in hours", 'float', 'store', 48, 'l'),
-    'nodes': ("Full nodes for the job", "int", "store", 1, "n"),
-    'ppn': ("Processors per node (-1=full node)", "int", "store", -1),
+    'account': ("Account name (empty string is default Account)", "string", "store", "", "A"),
     'mail': ("When to send mail (b=begin, e=end, a=abort)", "string", "extend", [], "m"),
     'mailothers': ("Other email adresses to send mail to", "string", "extend", [], "M"),
-    'queue': ("Queue name (empty string is default queue)", "string", "store", "", "q"),
+    'nodes': ("Full nodes for the job", "int", "store", 1, "n"),
     'partition': ("Partition name (empty string is default partition)", "string", "store", "", "p"),
-    'account': ("Account name (empty string is default Account)", "string", "store", "", "A"),
+    'ppn': ("Processors per node (-1=full node)", "int", "store", -1),
+    'queue': ("Queue name (empty string is default queue)", "string", "store", "", "q"),
     'reservation': ("ID of reservation to submit job into", 'string', 'store', ''),
+    'walltime': ("Job walltime in hours", 'float', 'store', 48, 'l'),
 }
 
 _log = fancylogger.getLogger('create', fname=False)
