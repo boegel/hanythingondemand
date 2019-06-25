@@ -226,6 +226,7 @@ class Slurm(ResourceManagerScheduler):
         mail = self.options.get('mail', [])
         mail_others = self.options.get('mailothers', [])
         reservation = self.options.get('reservation', None)
+        name = self.options.get('name', 'hod')
 
         self.log.debug("nodes %s, ppn %s, walltime %s, mail %s, mail_others %s",
                        nodes, ppn, walltime, mail, mail_others)
@@ -242,6 +243,7 @@ class Slurm(ResourceManagerScheduler):
                        nodes, ppn, walltimetxt)
 
         self.args = {
+            'job-name': name,
             'nodes': nodes,
             'ntasks-per-node': ppn,
             'time': walltimetxt,
