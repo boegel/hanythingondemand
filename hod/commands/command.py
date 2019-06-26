@@ -211,7 +211,7 @@ class Sbatch(Command):
 
     def __init__(self, script):
         Command.__init__(self)
-        self.command = ['sbatch', script]
+        self.command = ['sbatch', '--export=NONE', '--chdir=%s' % os.getenv('HOME'), script]
 
 
 class Scancel(Command):
