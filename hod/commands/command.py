@@ -214,6 +214,14 @@ class Sbatch(Command):
         self.command = ['sbatch', script]
 
 
+class Scancel(Command):
+    """Wrapper for 'scancel <jobid>'."""
+
+    def __init__(self, jobid):
+        Command.__init__(self)
+        self.command = ['scancel', jobid]
+
+
 class ScreenDaemon(Command):
     """Start a named screen session in background"""
     def __init__(self, name):

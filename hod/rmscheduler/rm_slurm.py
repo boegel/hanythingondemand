@@ -32,7 +32,7 @@ import re
 import tempfile
 from vsc.utils import fancylogger
 
-from hod.commands.command import Sbatch, Squeue
+from hod.commands.command import Sbatch, Scancel, Squeue
 from hod.rmscheduler.resourcemanagerscheduler import ResourceManagerScheduler
 
 
@@ -210,9 +210,10 @@ class Slurm(ResourceManagerScheduler):
         if jobid is None:
             jobid = self.jobid
 
-        raise NotImplementedError
+        stdout, stderr = Scancel(jobid).run()
 
-        return False  # FIXME return True if removal worked
+        # return True if removal was successful
+        return not stderr
 
     def header(self):
         """Return the script header that requests the properties.

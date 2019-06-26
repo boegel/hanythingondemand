@@ -97,20 +97,20 @@ class DestroySubCommand(SubCommand):
             # try to figure out job state
             job_state = None
 
-            pbs = rm_class(optparser)
-            jobs = pbs.state()
-            pbsjobs = [job for job in jobs if job.jobid == jobid]
-            self.log.debug("Matching jobs for job ID '%s': %s", jobid, pbsjobs)
+            rm = rm_class(optparser)
+            jobs = rm.state()
+            jobs = [job for job in jobs if job.jobid == jobid]
+            self.log.debug("Matching jobs for job ID '%s': %s", jobid, jobs)
 
-            if len(pbsjobs) == 1:
-                job_state = pbsjobs[0].state
+            if len(jobs) == 1:
+                job_state = jobs[0].state
                 print "Job status: %s" % job_state
 
-            elif len(pbsjobs) == 0:
+            elif len(jobs) == 0:
                 print "(job no longer found)"
 
             else:
-                self.report_error("Multiple jobs found with job ID '%s': %s", jobid, pbsjobs)
+                self.report_error("Multiple jobs found with job ID '%s': %s", jobid, jobs)
 
             # request confirmation is case the job is currently running
             if job_state == 'R':
@@ -127,8 +127,8 @@ class DestroySubCommand(SubCommand):
 
             # actually destroy HOD cluster by deleting job and removing cluster info dir and local work dir
             if job_state is not None:
-                # if job was not successfully deleted, pbs.remove will print an error message
-                if pbs.remove(jobid):
+                # if job was not successfully deleted, rm.remove will print an error message
+                if rm.remove(jobid):
                     print "Job with ID %s deleted." % jobid
 
             rm_cluster_localworkdir(label)
