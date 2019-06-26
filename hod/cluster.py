@@ -196,15 +196,18 @@ def mk_cluster_info_dict(labels, jobs, master=None):
     for label in labels:
         try:
             jobid = cluster_jobid(label)
+            _log.debug("Job ID for cluster '%s': %s", label, jobid)
             if master is not None and not jobid.endswith(master):
                 continue
             job = _find_job(jobid, jobs)
+            _log.debug("Job for job ID %s: %s", jobid, job)
             if job is not None:
                 seen_jobs.add(jobid)
         except ValueError as err:
             _log.error("Exception occured when fetching cluster info for cluster with label '%s': %s", label, err)
             jobid, job = None, None
         info.append(ClusterInfo(label, jobid, job))
+        _log.debug("Cluster info for '%s': %s", label, info[-1])
 
     return info
 
