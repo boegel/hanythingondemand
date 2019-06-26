@@ -203,7 +203,7 @@ class Squeue(Command):
         Command.__init__(self)
         self.command = ['squeue', '-o', '%all']
         if jobid:
-            self.command.append('--jobs=%s' % ','.join(jobid))
+            self.command.append('--jobs=%s' % jobid)
 
 
 class Sbatch(Command):
