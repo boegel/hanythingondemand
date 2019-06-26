@@ -145,11 +145,11 @@ class Slurm(ResourceManagerScheduler):
         jobs = [SlurmJob(j, s, h) for (j, s, h) in zip(jid, jstate, map(_first_or_blank, ehosts))]
         return jobs
 
-    def list_jobs(self):
+    def list_jobs(self, jobid=None):
         """Return list of currently queued/running jobs."""
 
         # https://gist.github.com/stevekm/7831fac98473ea17d781330baa0dd7aa
-        stdout, _ = Squeue().run()
+        stdout, _ = Squeue(jobid).run()
 
         # expected format:
         # CLUSTER: cluster_name
@@ -191,13 +191,8 @@ class Slurm(ResourceManagerScheduler):
             raise NotImplementedError("Unknown job filter keys encountered: %s" % job_filter.keys())
 
         # get list of all jobs
-        jobs = self.list_jobs()
+        jobs = self.list_jobs(jobid)
         self.log.debug("List of jobs before filtering: %s", jobs)
-
-        # filter based on job ID
-        self.log.debug("Filtering with jobid %s (type %s)", jobid, type(jobid))
-        jobs = [j for j in jobs if j['JOBID'] == jobid]
-        self.log.debug("List of jobs after filtering: %s", jobs)
 
         res = []
         for job in jobs:

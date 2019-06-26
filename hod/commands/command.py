@@ -199,9 +199,11 @@ class ULimit(Command):
 class Squeue(Command):
     """Wrapper for 'squeue -o %all'."""
 
-    def __init__(self):
+    def __init__(self, jobid=None):
         Command.__init__(self)
         self.command = ['squeue', '-o', '%all']
+        if jobid:
+            self.command.append('--jobs=%s' % ','.join(jobid))
 
 
 class Sbatch(Command):
