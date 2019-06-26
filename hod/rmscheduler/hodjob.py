@@ -25,7 +25,10 @@
 """
 
 @author: Stijn De Weirdt (University of Ghent)
+@author: Kenneth Hoste (University of Ghent)
 """
+import re
+
 from hod.rmscheduler.job import Job
 from hod.rmscheduler.rm_pbs import Pbs
 from hod.rmscheduler.rm_slurm import Slurm
@@ -44,6 +47,17 @@ class HodJob(Job):
         # TODO abs path?
         self.pythonexe = 'python'
         self.hodargs = self.options.generate_cmd_line(ignore='^(%s)_' % '|'.join(self.OPTION_IGNORE_PREFIX))
+
+        # generate_cmd_line escapes option values that contain $ with single quotes to prevent bash expansion,
+        # but we actually *want* bash expansion, so we revert this here...
+        # example: using $VSC_SCRATCH/hod as default value for --workdir option (we actually want $VSC_SCRATCH expanded)
+        regex = re.compile(r"='(.*\$.*)'$")
+        for idx, hodarg in enumerate(self.hodargs):
+            res = regex.search(hodarg)
+            if res:
+                self.log.info("hod argument '%s' matches pattern '%s', so tweaking it...")
+                self.hodargs[idx] = regex.sub(r'=\1', hodarg)
+                self.log.info("tweaked hod argument: %s", self.hodargs[idx])
 
         self.hodenvvarprefix = ['HOD', 'PBS']
 
