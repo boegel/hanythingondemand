@@ -217,6 +217,7 @@ class Sbatch(Command):
             'sbatch',
             '--export=NONE',
             '--chdir=%s' % home,
+            '--get-user-env=60L',
             '--error=%s' % os.path.join(cwd, '%x.e%A'),
             '--output=%s' % os.path.join(cwd, '%x.o%A'),
             script,
