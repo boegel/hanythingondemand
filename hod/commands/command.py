@@ -211,7 +211,16 @@ class Sbatch(Command):
 
     def __init__(self, script):
         Command.__init__(self)
-        self.command = ['sbatch', '--export=NONE', '--chdir=%s' % os.getenv('HOME'), script]
+        home = os.getenv('HOME')
+        cwd = os.getcwd()
+        self.command = [
+            'sbatch',
+            '--export=NONE',
+            '--chdir=%s' % home,
+            '--error=%s' % os.path.join(cwd, '%x.e%A'),
+            '--output=%s' % os.path.join(cwd, '%x.o%A'),
+            script,
+        ]
 
 
 class Scancel(Command):
