@@ -28,22 +28,31 @@ Destroy an HOD cluster.
 
 @author: Kenneth Hoste (Ghent University)
 """
-import os
+import copy
 import sys
-
 from vsc.utils.generaloption import GeneralOption
 
 import hod
-import hod.rmscheduler.rm_pbs as rm_pbs
 from hod.cluster import cluster_info_exists, cluster_jobid, rm_cluster_info, rm_cluster_localworkdir
+from hod.options import COMMON_HOD_CONFIG_OPTIONS, GENERAL_HOD_OPTIONS, PBS, SLURM
+from hod.rmscheduler.rm_pbs import Pbs
+from hod.rmscheduler.rm_slurm import Slurm
 from hod.subcommands.subcommand import SubCommand
-
 
 
 class DestroyOptions(GeneralOption):
     """Option parser for 'destroy' subcommand."""
     VERSION = hod.VERSION
-    ALLOPTSMANDATORY = False # let us use optionless arguments.
+    ALLOPTSMANDATORY = False  # let us use optionless arguments.
+
+    def config_options(self):
+        """Add general configuration options."""
+        opts = copy.deepcopy(GENERAL_HOD_OPTIONS)
+        opts.update(COMMON_HOD_CONFIG_OPTIONS)
+        descr = ["Create configuration", "Configuration options for the 'list' subcommand"]
+
+        self.log.debug("Add config option parser descr %s opts %s", descr, opts)
+        self.add_group_parser(opts, descr)
 
 
 class DestroySubCommand(SubCommand):
@@ -61,6 +70,15 @@ class DestroySubCommand(SubCommand):
     def run(self, args):
         """Run 'destroy' subcommand."""
         optparser = DestroyOptions(go_args=args, envvar_prefix=self.envvar_prefix, usage=self.usage_txt)
+
+        if optparser.options.rm_backend == SLURM:
+            rm_class = Slurm
+        elif optparser.options.rm_backend == PBS:
+            rm_class = Pbs
+        else:
+            sys.stderr.write("Unknown resource manager backend specified: %s", optparser.options.rm_backend)
+            return 1
+
         try:
             label, jobid = None, None
 
@@ -79,13 +97,13 @@ class DestroySubCommand(SubCommand):
             # try to figure out job state
             job_state = None
 
-            pbs = rm_pbs.Pbs(optparser)
+            pbs = rm_class(optparser)
             jobs = pbs.state()
             pbsjobs = [job for job in jobs if job.jobid == jobid]
             self.log.debug("Matching jobs for job ID '%s': %s", jobid, pbsjobs)
 
             if len(pbsjobs) == 1:
-                job_state = pbsjobs[0].state 
+                job_state = pbsjobs[0].state
                 print "Job status: %s" % job_state
 
             elif len(pbsjobs) == 0:
