@@ -113,15 +113,15 @@ class TestCluster(unittest.TestCase):
                 with patch('os.path.exists', return_value=False):
                     self.assertRaises(ValueError, hc._cluster_info, '1234', 'jobid')
 
-    def test_find_pbsjob(self):
+    def test_find_job(self):
         expected = PbsJob('123', 'R', 'host')
-        self.assertEqual(expected.jobid, hc._find_pbsjob('123', [PbsJob('123', 'R', 'host'), PbsJob('abc', 'Q', '')]).jobid)
-        self.assertEqual(None, hc._find_pbsjob('xyz', [PbsJob('123', 'R', 'host'), PbsJob('abc', 'Q', '')]))
+        self.assertEqual(expected.jobid, hc._find_job('123', [PbsJob('123', 'R', 'host'), PbsJob('abc', 'Q', '')]).jobid)
+        self.assertEqual(None, hc._find_job('xyz', [PbsJob('123', 'R', 'host'), PbsJob('abc', 'Q', '')]))
 
-    def test_find_pbsjob_multiple(self):
+    def test_find_job_multiple(self):
         jobs = [PbsJob('123', 'R', 'host1'), PbsJob('abc', 'Q', '')]
-        self.assertEqual(jobs[0], hc._find_pbsjob('123', jobs))
-        self.assertEqual(jobs[1], hc._find_pbsjob('abc', jobs))
+        self.assertEqual(jobs[0], hc._find_job('123', jobs))
+        self.assertEqual(jobs[1], hc._find_job('abc', jobs))
 
     def test_mk_cluster_info_dict(self):
         jobs = [PbsJob('123', 'R', 'host1'), PbsJob('abc', 'Q', '')]
