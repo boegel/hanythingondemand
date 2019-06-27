@@ -61,7 +61,8 @@ class HodJob(Job):
 
         # any environment variables required by services must be listed here (strictly requires in Slurm environment?),
         # to avoid passing down empty environment variables...
-        self.hodenvvarprefix = ['HOD', 'PBS', 'EBROOTHADOOP', 'EBROOTHBASE', 'HADOOP_HOME', 'JAVA_HOME']
+        self.hodenvvarprefix = ['HOD', 'PBS', 'SLURM', 'HOME', 'USER',
+                                'EBROOTHADOOP', 'EBROOTHBASE', 'HADOOP_HOME', 'JAVA_HOME']
 
         self.set_type_class()
 
