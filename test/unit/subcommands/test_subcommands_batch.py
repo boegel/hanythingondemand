@@ -81,23 +81,25 @@ class TestBatchSubCommand(unittest.TestCase):
                                              '--hod-module=hanythingondemand']))
 
     def test_run_with_hodconf(self):
-        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+        for (rm_backend, hodjob_class) in [('PBS', 'PbsHodJob'), ('Slurm', 'SlurmHodJob')]:
             with patch('hod.subcommands.batch.%s' % hodjob_class):
                 with patch('hod.cluster.mk_cluster_info'):
                     with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
                         with tmpscript('some-script.sh'):
                             app = BatchSubCommand()
-                            self.assertEqual(0, app.run(['--hodconf=hod.conf', '--workdir=workdir',
+                            self.assertEqual(0, app.run(['--rm-backend=%s' % rm_backend,
+                                                         '--hodconf=hod.conf', '--workdir=workdir',
                                                          '--hod-module=hanythingondemand', '--script=some-script.sh']))
 
     def test_run_with_dist(self):
-        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+        for (rm_backend, hodjob_class) in [('PBS', 'PbsHodJob'), ('Slurm', 'SlurmHodJob')]:
             with patch('hod.subcommands.batch.%s' % hodjob_class):
                 with patch('hod.cluster.mk_cluster_info'):
                     with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
                         with tmpscript('some-script.sh'):
                             app = BatchSubCommand()
-                            self.assertEqual(0, app.run(['--dist=Hadoop-2.3.0', '--workdir=workdir',
+                            self.assertEqual(0, app.run(['--rm-backend=%s' % rm_backend,
+                                                         '--dist=Hadoop-2.3.0', '--workdir=workdir',
                                                          '--hod-module=hanythingondemand', '--script=some-script.sh']))
 
     def test_run_fails_with_config_and_dist_arg(self):
