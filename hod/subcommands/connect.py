@@ -29,23 +29,33 @@ Connect to a hod cluster.
 @author: Ewan Higgs (Ghent University)
 @author: Kenneth Hoste (Ghent University)
 """
-
+import copy
 import os
-import os.path
 import sys
 
 from vsc.utils.generaloption import GeneralOption
 
+from hod import VERSION as HOD_VERSION
 from hod.cluster import cluster_env_file, cluster_jobid
+from hod.options import COMMON_HOD_CONFIG_OPTIONS, GENERAL_HOD_OPTIONS, PBS, SLURM
+from hod.rmscheduler.rm_pbs import Pbs
+from hod.rmscheduler.rm_slurm import Slurm
 from hod.subcommands.subcommand import SubCommand
-import hod
-import hod.rmscheduler.rm_pbs as rm_pbs
 
 
 class ConnectOptions(GeneralOption):
     """Option parser for 'connect' subcommand."""
-    VERSION = hod.VERSION
-    ALLOPTSMANDATORY = False # let us use optionless arguments.
+    VERSION = HOD_VERSION
+    ALLOPTSMANDATORY = False  # let us use optionless arguments.
+
+    def config_options(self):
+        """Add general configuration options."""
+        opts = copy.deepcopy(GENERAL_HOD_OPTIONS)
+        opts.update(COMMON_HOD_CONFIG_OPTIONS)
+        descr = ["Create configuration", "Configuration options for the 'list' subcommand"]
+
+        self.log.debug("Add config option parser descr %s opts %s", descr, opts)
+        self.add_group_parser(opts, descr)
 
 
 class ConnectSubCommand(SubCommand):
@@ -63,6 +73,15 @@ class ConnectSubCommand(SubCommand):
     def run(self, args):
         """Run 'connect' subcommand."""
         optparser = ConnectOptions(go_args=args, envvar_prefix=self.envvar_prefix, usage=self.usage_txt)
+
+        if optparser.options.rm_backend == SLURM:
+            rm_class = Slurm
+        elif optparser.options.rm_backend == PBS:
+            rm_class = Pbs
+        else:
+            sys.stderr.write("Unknown resource manager backend specified: %s", optparser.options.rm_backend)
+            return 1
+
         try:
             if len(optparser.args) > 1:
                 label = optparser.args[1]
@@ -79,7 +98,7 @@ class ConnectSubCommand(SubCommand):
 
             print "Job ID found: %s" % jobid
 
-            pbs = rm_pbs.Pbs(optparser)
+            pbs = rm_class(optparser)
             jobs = pbs.state()
             pbsjobs = [job for job in jobs if job.jobid == jobid]
 
