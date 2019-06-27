@@ -59,7 +59,9 @@ class HodJob(Job):
                 self.hodargs[idx] = regex.sub(r'=\1', hodarg)
                 self.log.info("tweaked hod argument: %s", self.hodargs[idx])
 
-        self.hodenvvarprefix = ['HOD', 'PBS']
+        # any environment variables required by services must be listed here (strictly requires in Slurm environment?),
+        # to avoid passing down empty environment variables...
+        self.hodenvvarprefix = ['HOD', 'PBS', 'EBROOTHADOOP', 'EBROOTHBASE', 'HADOOP_HOME', 'JAVA_HOME']
 
         self.set_type_class()
 
