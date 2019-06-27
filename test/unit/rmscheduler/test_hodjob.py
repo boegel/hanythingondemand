@@ -102,7 +102,7 @@ class HodRMSchedulerHodjobTestCase(unittest.TestCase):
             'mympirun',
             '--output=$None/hod.output.$None',
             '--hybrid=1',
-            '--variablesprefix=HOD,PBS',
+            '--variablesprefix=HOD,PBS,SLURM,HOME,USER,EBROOTHADOOP,EBROOTHBASE,HADOOP_HOME,JAVA_HOME',
             'python -m hod.local',
             '--hodconf=hod.conf',
         ])

@@ -60,45 +60,53 @@ def tmpscript(script):
 class TestBatchSubCommand(unittest.TestCase):
     @pytest.mark.xfail(reason="Requires easybuild environment")
     def test_run_no_args(self):
-        with patch('hod.subcommands.batch.PbsHodJob'):
-            app = BatchSubCommand()
-            self.assertRaises(ValueError, app.run, [])
+        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+            with patch('hod.subcommands.batch.%s' % hodjob_class):
+                app = BatchSubCommand()
+                self.assertRaises(ValueError, app.run, [])
 
     @pytest.mark.xfail(reason="Requires easybuild environment")
     def test_run_with_hodconf_and_no_script(self):
-        with patch('hod.subcommands.batch.PbsHodJob'):
-            app = BatchSubCommand()
-            self.assertEqual(1, app.run(['--hodconf=hod.conf', '--workdir=workdir', '--hod-module=hanythingondemand']))
+        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+            with patch('hod.subcommands.batch.%s' % hodjob_class):
+                app = BatchSubCommand()
+                self.assertEqual(1, app.run(['--hodconf=hod.conf', '--workdir=workdir',
+                                             '--hod-module=hanythingondemand']))
 
     def test_run_fails_with_dist_and_no_script(self):
-        with patch('hod.subcommands.batch.PbsHodJob'):
-            app = BatchSubCommand()
-            self.assertEqual(1, app.run(['--dist=Hadoop-2.3.0', '--workdir=workdir', '--hod-module=hanythingondemand']))
+        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+            with patch('hod.subcommands.batch.%s' % hodjob_class):
+                app = BatchSubCommand()
+                self.assertEqual(1, app.run(['--dist=Hadoop-2.3.0', '--workdir=workdir',
+                                             '--hod-module=hanythingondemand']))
 
     def test_run_with_hodconf(self):
-        with patch('hod.subcommands.batch.PbsHodJob'):
-            with patch('hod.cluster.mk_cluster_info'):
-                with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
-                    with tmpscript('some-script.sh'):
-                        app = BatchSubCommand()
-                        self.assertEqual(0, app.run(['--hodconf=hod.conf', '--workdir=workdir',
-                                                     '--hod-module=hanythingondemand', '--script=some-script.sh']))
+        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+            with patch('hod.subcommands.batch.%s' % hodjob_class):
+                with patch('hod.cluster.mk_cluster_info'):
+                    with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
+                        with tmpscript('some-script.sh'):
+                            app = BatchSubCommand()
+                            self.assertEqual(0, app.run(['--hodconf=hod.conf', '--workdir=workdir',
+                                                         '--hod-module=hanythingondemand', '--script=some-script.sh']))
 
     def test_run_with_dist(self):
-        with patch('hod.subcommands.batch.PbsHodJob'):
-            with patch('hod.cluster.mk_cluster_info'):
-                with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
-                    with tmpscript('some-script.sh'):
-                        app = BatchSubCommand()
-                        self.assertEqual(0, app.run(['--dist=Hadoop-2.3.0', '--workdir=workdir',
-                                                     '--hod-module=hanythingondemand', '--script=some-script.sh']))
+        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+            with patch('hod.subcommands.batch.%s' % hodjob_class):
+                with patch('hod.cluster.mk_cluster_info'):
+                    with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
+                        with tmpscript('some-script.sh'):
+                            app = BatchSubCommand()
+                            self.assertEqual(0, app.run(['--dist=Hadoop-2.3.0', '--workdir=workdir',
+                                                         '--hod-module=hanythingondemand', '--script=some-script.sh']))
 
     def test_run_fails_with_config_and_dist_arg(self):
-        with patch('hod.subcommands.batch.PbsHodJob'):
-            with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
-                app = BatchSubCommand()
-                self.assertEqual(1, app.run(['--hodconf=hod.conf', '--dist=Hadoop-2.3.0',
-                                             '--hod-module=hanythingondemand', '--workdir=workdir']))
+        for hodjob_class in ['PbsHodJob', 'SlurmHodJob']:
+            with patch('hod.subcommands.batch.%s' % hodjob_class):
+                with patch('hod.cluster.validate_hodconf_or_dist', return_value=True):
+                    app = BatchSubCommand()
+                    self.assertEqual(1, app.run(['--hodconf=hod.conf', '--dist=Hadoop-2.3.0',
+                                                 '--hod-module=hanythingondemand', '--workdir=workdir']))
 
     def test_usage(self):
         app = BatchSubCommand()
