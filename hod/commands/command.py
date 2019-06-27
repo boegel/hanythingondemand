@@ -43,7 +43,7 @@ from vsc.utils import fancylogger
 
 
 COMMAND_TIMEOUT = 120  # timeout in seconds
-NO_TIMEOUT = None # No timeout
+NO_TIMEOUT = None  # No timeout
 
 TIMEOUT_POLL_TIME = 1
 NO_TIMEOUT_POLL_TIME = 10
@@ -116,6 +116,16 @@ class Command(object):
             }
 
         if self.env is not None:
+            # make sure that all values for environment variables are strings,
+            # otherwise we'll run into confusing errors like "execve() arg 3 contains a non-string value"
+            non_string = {}
+            for key, val in sorted(self.env.items()):
+                if not isinstance(val, basestring):
+                    non_string[key] = val
+
+            if non_string:
+                raise ValueError("Found one or more non-string values for environment variables: %s" % non_string)
+
             popen_kwargs['env'] = self.env
 
         popen_kwargs.update(stdouterr)
@@ -136,7 +146,7 @@ class Command(object):
                         if timedout is False:
                             os.kill(p.pid, signal.SIGTERM)
                             self.log.debug("Timeout occured with cmd %s. took more than %i secs to complete.",
-                                    self.command, self.timeout)
+                                           self.command, self.timeout)
                             timedout = True
                         else:
                             os.kill(p.pid, signal.SIGKILL)
@@ -185,6 +195,7 @@ class KillPidFile(Command):
 
         self.command = ['kill', pid]
         Command.run(self)
+
 
 class ULimit(Command):
     '''
