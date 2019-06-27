@@ -29,6 +29,7 @@ Implementation of the Slurm resource manager
 """
 import os
 import re
+import sys
 import tempfile
 from vsc.utils import fancylogger
 
@@ -149,7 +150,9 @@ class Slurm(ResourceManagerScheduler):
         """Return list of currently queued/running jobs."""
 
         # https://gist.github.com/stevekm/7831fac98473ea17d781330baa0dd7aa
-        stdout, _ = Squeue(jobid).run()
+        stdout, stderr = Squeue(jobid).run()
+        if stderr:
+            raise RuntimeError("squeue failed: %s" % stderr)
 
         # expected format:
         # CLUSTER: cluster_name
@@ -211,6 +214,8 @@ class Slurm(ResourceManagerScheduler):
             jobid = self.jobid
 
         stdout, stderr = Scancel(jobid).run()
+        if stderr:
+            sys.stderr.write("scancel failed: %s\n" % stderr)
 
         # return True if removal was successful
         return not stderr
