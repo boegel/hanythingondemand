@@ -33,7 +33,7 @@ import sys
 import tempfile
 from vsc.utils import fancylogger
 
-from hod.commands.command import Sbatch, Scancel, Squeue
+from hod.commands.command import Sbatch, Scancel, Sinfo, Squeue
 from hod.rmscheduler.resourcemanagerscheduler import ResourceManagerScheduler
 
 
@@ -240,6 +240,9 @@ class Slurm(ResourceManagerScheduler):
         if nodes is None:
             nodes = 1
 
+        if ppn == -1:
+            ppn = self.get_ppn()
+
         if ppn is None:
             ppn = 1
 
@@ -286,3 +289,29 @@ class Slurm(ResourceManagerScheduler):
         hdr = ["#SBATCH %s" % o for o in opts]
         self.log.debug("Created job script header %s", hdr)
         return hdr
+
+    def get_ppn(self):
+        """Determine number of cores per node."""
+        stdout, stderr = Sinfo('-o', '%X').run()
+        if stderr:
+            raise ValueError("Failed to run sinfo to determine number of sockets: %s" % stderr)
+
+        try:
+            sockets = int(stdout.splitlines()[-1])
+        except (TypeError, ValueError) as err:
+            raise ValueError("Failed to extract number of sockets from 'sinfo' output: %s\n%s", stdout, err)
+
+        stdout, stderr = Sinfo('-o', '%Y').run()
+        if stderr:
+            raise ValueError("Failed to run sinfo to determine numer of cores per socket: %s" % stderr)
+
+        try:
+            cores_per_socket = int(stdout.splitlines()[-1])
+        except (TypeError, ValueError) as err:
+            raise ValueError("Failed to extract number of cores per socket from 'sinfo' output: %s\n%s", stdout, err)
+
+        ppn = sockets * cores_per_socket
+
+        self.log.info("Number of cores per node: %d sockets x %d cores-per-socket = %d", sockets, cores_per_socket, ppn)
+
+        return ppn

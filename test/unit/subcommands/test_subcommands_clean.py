@@ -32,6 +32,7 @@ from mock import patch, Mock
 from ..util import capture
 from hod.subcommands.clean import CleanSubCommand
 
+
 class TestCleanSubCommand(unittest.TestCase):
     def test_run(self):
         with patch('hod.cluster.rm_cluster_info'):

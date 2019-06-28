@@ -243,6 +243,14 @@ class Scancel(Command):
         self.command = ['scancel', jobid]
 
 
+class Sinfo(Command):
+    """Wrapper for 'sinfo <args>'."""
+
+    def __init__(self, *args):
+        Command.__init__(self)
+        self.command = ['sinfo'] + list(args)
+
+
 class ScreenDaemon(Command):
     """Start a named screen session in background"""
     def __init__(self, name):
