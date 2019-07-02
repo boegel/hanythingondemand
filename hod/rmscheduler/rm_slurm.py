@@ -31,6 +31,7 @@ import os
 import re
 import sys
 import tempfile
+from collections import Counter
 from vsc.utils import fancylogger
 
 from hod.commands.command import Sbatch, Scancel, Sinfo, Squeue
@@ -292,21 +293,31 @@ class Slurm(ResourceManagerScheduler):
 
     def get_ppn(self):
         """Determine number of cores per node."""
-        stdout, stderr = Sinfo('-o', '%X').run()
+        stdout, stderr = Sinfo('-N', '-e', '-o', '%X').run()
         if stderr:
             raise ValueError("Failed to run sinfo to determine number of sockets: %s" % stderr)
 
         try:
-            sockets = int(stdout.splitlines()[-1])
+            # output has sockets-per-node on each line, each two first lines which are header lines
+            sockets_per_node = stdout.splitlines()[2:]
+            # determine most common sockets-per-node count
+            counter = Counter(sockets_per_node)
+            sockets = int(counter.most_common()[0][0])
+            self.log.info("Sockets-per-node counts: %s => most common: %s", counter, sockets)
         except (TypeError, ValueError) as err:
             raise ValueError("Failed to extract number of sockets from 'sinfo' output: %s\n%s", stdout, err)
 
-        stdout, stderr = Sinfo('-o', '%Y').run()
+        stdout, stderr = Sinfo('-N', '-e', '-o', '%Y').run()
         if stderr:
             raise ValueError("Failed to run sinfo to determine numer of cores per socket: %s" % stderr)
 
         try:
-            cores_per_socket = int(stdout.splitlines()[-1])
+            # output has cores-per-socket-per-node on each line, each two first lines which are header lines
+            cores_per_socket_per_node = stdout.splitlines()[2:]
+            # determine most common cores-per-socket-per-node count
+            counter = Counter(cores_per_socket_per_node)
+            cores_per_socket = int(counter.most_common()[0][0])
+            self.log.info("Cores-per-socket-per-node counts: %s => most common: %s", counter, cores_per_socket)
         except (TypeError, ValueError) as err:
             raise ValueError("Failed to extract number of cores per socket from 'sinfo' output: %s\n%s", stdout, err)
 
